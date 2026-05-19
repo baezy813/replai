@@ -44,6 +44,14 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// NextAuth 이메일 인증 토큰 (OAuth만 써도 어댑터가 요구)
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
+
 // Replai 핵심 모델
 model InterviewSession {
   id        String     @id @default(cuid())
