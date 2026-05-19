@@ -1,13 +1,85 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// NextAuth 필수 모델들
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  interviewSessions InterviewSession[]
+  createdAt     DateTime  @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Replai 핵심 모델
+model InterviewSession {
+  id        String     @id @default(cuid())
+  userId    String
+  jobTitle  String
+  jdText    String     @db.Text
+  questions Question[]
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id        String    @id @default(cuid())
+  sessionId String
+  content   String    @db.Text
+  category  String    // "tech" | "behavioral" | "cs"
+  order     Int
+  answer    Answer?
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+model Answer {
+  id         String    @id @default(cuid())
+  questionId String    @unique
+  content    String    @db.Text
+  feedback   Feedback?
+  createdAt  DateTime  @default(now())
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id           String @id @default(cuid())
+  answerId     String @unique
+  strengths    String @db.Text
+  improvements String @db.Text
+  modelAnswer  String @db.Text
+  score        Int    // 0-100
+  answer       Answer @relation(fields: [answerId], references: [id], onDelete: Cascade)
 }
