@@ -13,4 +13,15 @@ export async function generateText(prompt: string): Promise<string> {
   return response.text ?? "";
 }
 
+// JSON 응답 파싱 - 마크다운 코드블록도 처리
+export async function generateJson<T>(prompt: string): Promise<T> {
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+  });
+  const raw = response.text ?? ""; 
+  const cleaned = raw.replace(/^```(?:json)?\s*/m, "").replace(/\s*```\s*$/m, "").trim();
+  return JSON.parse(cleaned) as T;
+}
+
 export { ai };
